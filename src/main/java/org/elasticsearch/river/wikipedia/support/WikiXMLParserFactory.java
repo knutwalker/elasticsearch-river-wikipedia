@@ -20,14 +20,16 @@
 package org.elasticsearch.river.wikipedia.support;
 
 import java.net.URL;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * @author Delip Rao
  */
 public class WikiXMLParserFactory {
 
-    public static WikiXMLParser getSAXParser(URL fileName) {
-        return new WikiXMLSAXParser(fileName);
+    public static WikiXMLParser getSAXParser(URL fileName, Map<String, Pattern> languagePattern) {
+        return new WikiXMLSAXParser(fileName, languagePattern);
     }
 
 }

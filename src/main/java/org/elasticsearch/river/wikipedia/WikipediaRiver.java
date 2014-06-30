@@ -45,32 +45,41 @@ import org.elasticsearch.river.wikipedia.support.WikiXMLParserFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  *
  */
 public class WikipediaRiver extends AbstractRiverComponent implements River {
 
+
+
     private StringBuilder sb = new StringBuilder();
-
     private final Client client;
-
     private final URL url;
-
     private final String indexName;
-
     private final String typeName;
-
     private final int bulkSize;
-
     private volatile Thread thread;
-
     private volatile boolean closed = false;
-
     private final TimeValue bulkFlushInterval;
     private volatile BulkProcessor bulkProcessor;
     private final int maxConcurrentBulk;
+
+    private Pattern redirectPattern = Pattern.compile("#REDIRECT\\s+\\[\\[(.*?)\\]\\]", Pattern.CASE_INSENSITIVE);
+    private Pattern disambCatPattern = Pattern.compile("\\{\\{[Dd]isambig(uation)?\\}\\}");
+    private Pattern stubPattern = Pattern.compile("\\-stub\\}\\}");
+    private Pattern categoryPattern = Pattern.compile("\\[\\[[Cc]ategory:(.*?)\\]\\]", Pattern.MULTILINE);
+    private Pattern linkPattern = Pattern.compile("\\[\\[(.*?)\\]\\]", Pattern.MULTILINE);
+
+    private Map<String, Pattern> languagePattern;
+    public static final String REDIRECT_REGEX = "redirect_pattern";
+    public static final String DISAMBIGUATION_REGEX = "disambigutaion_regex";
+    public static final String STUB_REGEX = "stub_pattern";
+    public static final String CATEGORY_REGEX = "category_pattern";
+    public static final String LINK_REGEX = "link_pattern";
 
 
     @SuppressWarnings({"unchecked"})
@@ -79,10 +88,13 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
         super(riverName, settings);
         this.client = client;
 
+        initParsingPatternConfig();
         String url = "http://download.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2";
         if (settings.settings().containsKey("wikipedia")) {
             Map<String, Object> wikipediaSettings = (Map<String, Object>) settings.settings().get("wikipedia");
             url = XContentMapValues.nodeStringValue(wikipediaSettings.get("url"), url);
+            logger.info("Creating Parsing config with {}", wikipediaSettings);
+            updateParsingPatternConfig(wikipediaSettings);
         }
 
         logger.info("creating wikipedia stream river for [{}]", url);
@@ -121,7 +133,7 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
                 return;
             }
         }
-        WikiXMLParser parser = WikiXMLParserFactory.getSAXParser(url);
+        WikiXMLParser parser = WikiXMLParserFactory.getSAXParser(url, languagePattern);
         try {
             parser.setPageCallback(new PageCallback());
         } catch (Exception e) {
@@ -250,4 +262,44 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
         }
         return sb.toString();
     }
+
+
+    private void initParsingPatternConfig(){
+        languagePattern = new HashMap<String, Pattern>(5);
+        languagePattern.put(REDIRECT_REGEX, redirectPattern);
+        languagePattern.put(DISAMBIGUATION_REGEX, disambCatPattern);
+        languagePattern.put(STUB_REGEX, stubPattern);
+        languagePattern.put(CATEGORY_REGEX, categoryPattern);
+        languagePattern.put(LINK_REGEX, linkPattern);
+    }
+
+    private void updateParsingPatternConfig(final Map<String, Object> wikipediaSettings){
+
+        if (wikipediaSettings.containsKey(REDIRECT_REGEX)){
+            languagePattern.put(REDIRECT_REGEX,
+                    Pattern.compile((String) wikipediaSettings.get(REDIRECT_REGEX), Pattern.CASE_INSENSITIVE));
+        }
+
+        if (wikipediaSettings.containsKey(DISAMBIGUATION_REGEX)){
+            languagePattern.put(DISAMBIGUATION_REGEX,
+                    Pattern.compile((String) wikipediaSettings.get(DISAMBIGUATION_REGEX)));
+        }
+
+        if (wikipediaSettings.containsKey(STUB_REGEX)){
+            languagePattern.put(STUB_REGEX,
+                    Pattern.compile((String) wikipediaSettings.get(STUB_REGEX)));
+        }
+
+        if (wikipediaSettings.containsKey(CATEGORY_REGEX)){
+            languagePattern.put(CATEGORY_REGEX,
+                    Pattern.compile((String) wikipediaSettings.get(CATEGORY_REGEX), Pattern.MULTILINE));
+        }
+
+        if (wikipediaSettings.containsKey(LINK_REGEX)){
+            languagePattern.put(LINK_REGEX,
+                    Pattern.compile((String) wikipediaSettings.get(LINK_REGEX), Pattern.MULTILINE));
+        }
+    }
+
+
 }

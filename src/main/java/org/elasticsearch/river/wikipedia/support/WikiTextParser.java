@@ -36,7 +36,10 @@
 
 package org.elasticsearch.river.wikipedia.support;
 
+import org.elasticsearch.river.wikipedia.WikipediaRiver;
+
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,18 +56,22 @@ public class WikiTextParser {
     private ArrayList<String> pageLinks = null;
     private boolean redirect = false;
     private String redirectString = null;
-    private static Pattern redirectPattern =
-            Pattern.compile("#REDIRECT\\s+\\[\\[(.*?)\\]\\]", Pattern.CASE_INSENSITIVE);
     private boolean stub = false;
     private boolean disambiguation = false;
-    private static Pattern stubPattern = Pattern.compile("\\-stub\\}\\}");
-    // the first letter of pages is case-insensitive
-    private static Pattern disambCatPattern =
-            Pattern.compile("\\{\\{[Dd]isambig(uation)?\\}\\}");
     private InfoBox infoBox = null;
 
-    public WikiTextParser(String wtext) {
+    private static Pattern categoryPattern = null;
+    private static Pattern linkPattern = null;
+
+    public WikiTextParser(String wtext, Map<String, Pattern> regexPatterns) {
         wikiText = wtext;
+        // set the parsing pattern
+        Pattern redirectPattern = regexPatterns.get(WikipediaRiver.REDIRECT_REGEX);
+        Pattern disambCatPattern = regexPatterns.get(WikipediaRiver.DISAMBIGUATION_REGEX);
+        Pattern stubPattern = regexPatterns.get(WikipediaRiver.STUB_REGEX);
+        categoryPattern = regexPatterns.get(WikipediaRiver.CATEGORY_REGEX);
+        linkPattern = regexPatterns.get(WikipediaRiver.LINK_REGEX);
+
         Matcher matcher = redirectPattern.matcher(wikiText);
         if (matcher.find()) {
             redirect = true;
@@ -105,8 +112,7 @@ public class WikiTextParser {
 
     private void parseCategories() {
         pageCats = new ArrayList<String>();
-        Pattern catPattern = Pattern.compile("\\[\\[[Cc]ategory:(.*?)\\]\\]", Pattern.MULTILINE);
-        Matcher matcher = catPattern.matcher(wikiText);
+        Matcher matcher = categoryPattern.matcher(wikiText);
         while (matcher.find()) {
             String[] temp = matcher.group(1).split("\\|");
             pageCats.add(temp[0]);
@@ -115,14 +121,12 @@ public class WikiTextParser {
 
     private void parseLinks() {
         pageLinks = new ArrayList<String>();
-
-        Pattern catPattern = Pattern.compile("\\[\\[(.*?)\\]\\]", Pattern.MULTILINE);
-        Matcher matcher = catPattern.matcher(wikiText);
+        Matcher matcher = linkPattern.matcher(wikiText);
         while (matcher.find()) {
             String[] temp = matcher.group(1).split("\\|");
             if (temp == null || temp.length == 0) continue;
             String link = temp[0];
-            if (link.contains(":") == false) {
+            if (!link.contains(":")) {
                 pageLinks.add(link);
             }
         }

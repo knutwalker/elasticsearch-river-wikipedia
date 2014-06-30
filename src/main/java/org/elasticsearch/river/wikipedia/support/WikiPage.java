@@ -20,6 +20,8 @@
 package org.elasticsearch.river.wikipedia.support;
 
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Data structures for a wikipedia page.
@@ -47,8 +49,8 @@ public class WikiPage {
      *
      * @param wtext wiki-formatted text
      */
-    public void setWikiText(String wtext) {
-        wikiTextParser = new WikiTextParser(wtext);
+    public void setWikiText(String wtext, Map<String, Pattern> languagePattern) {
+        wikiTextParser = new WikiTextParser(wtext, languagePattern);
     }
 
     /**

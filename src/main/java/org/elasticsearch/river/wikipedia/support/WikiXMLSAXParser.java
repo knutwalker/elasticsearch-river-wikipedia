@@ -24,6 +24,8 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import java.net.URL;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * A SAX Parser for Wikipedia XML dumps.
@@ -34,9 +36,11 @@ public class WikiXMLSAXParser extends WikiXMLParser {
 
     private XMLReader xmlReader;
     private PageCallbackHandler pageHandler = null;
+    private static Map<String, Pattern> parsingRegxDefinitions;
 
-    public WikiXMLSAXParser(URL fileName) {
+    public WikiXMLSAXParser(URL fileName,  Map<String, Pattern> patternDefinitions) {
         super(fileName);
+        parsingRegxDefinitions = patternDefinitions;
         try {
             xmlReader = XMLReaderFactory.createXMLReader();
             pageHandler = new IteratorHandler(this);
@@ -64,7 +68,7 @@ public class WikiXMLSAXParser extends WikiXMLParser {
      * @throws Exception
      */
     public void parse() throws Exception {
-        xmlReader.setContentHandler(new SAXPageCallbackHandler(pageHandler));
+        xmlReader.setContentHandler(new SAXPageCallbackHandler(pageHandler, parsingRegxDefinitions));
         xmlReader.parse(getInputSource());
     }
 
@@ -89,7 +93,7 @@ public class WikiXMLSAXParser extends WikiXMLParser {
      */
     public static void parseWikipediaDump(URL dumpFile,
                                           PageCallbackHandler handler) throws Exception {
-        WikiXMLParser wxsp = WikiXMLParserFactory.getSAXParser(dumpFile);
+        WikiXMLParser wxsp = WikiXMLParserFactory.getSAXParser(dumpFile, parsingRegxDefinitions);
         wxsp.setPageCallback(handler);
         wxsp.parse();
     }

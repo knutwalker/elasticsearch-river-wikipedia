@@ -68,23 +68,25 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
     private volatile BulkProcessor bulkProcessor;
     private final int maxConcurrentBulk;
 
-    private Pattern redirectPattern = Pattern.compile("#REDIRECT\\s+\\[\\[(.*?)\\]\\]", Pattern.CASE_INSENSITIVE);
-    private Pattern disambCatPattern = Pattern.compile("\\{\\{[Dd]isambig(uation)?\\}\\}");
-    private Pattern stubPattern = Pattern.compile("\\-stub\\}\\}");
-    private Pattern categoryPattern = Pattern.compile("\\[\\[[Cc]ategory:(.*?)\\]\\]", Pattern.MULTILINE);
-    private Pattern linkPattern = Pattern.compile("\\[\\[(.*?)\\]\\]", Pattern.MULTILINE);
 
     private Map<String, Pattern> languagePattern;
-    public static final String REDIRECT_REGEX = "redirect_pattern";
-    public static final String DISAMBIGUATION_REGEX = "disambigutaion_regex";
-    public static final String STUB_REGEX = "stub_pattern";
-    public static final String CATEGORY_REGEX = "category_pattern";
-    public static final String LINK_REGEX = "link_pattern";
+    public static final String REDIRECT_REGEX_KEY = "redirect_pattern";
+    public static final String DISAMBIGUATION_REGEX_KEY = "disambigutaion_regex";
+    public static final String STUB_REGEX_KEY = "stub_pattern";
+    public static final String CATEGORY_REGEX_KEY = "category_pattern";
+    public static final String LINK_REGEX_KEY = "link_pattern";
+
+    private static final String REDIRECT_REGEX ="#REDIRECT\\s+\\[\\[(.*?)\\]\\]";
+    private static final String DISAMBIGUATION_REGEX ="\\{\\{[Dd]isambig(uation)?\\}\\}";
+    private static final String STUB_REGEX ="\\-stub\\}\\}";
+    private static final String CATEGORY_REGEX ="\\[\\[[Cc]ategory:(.*?)\\]\\]";
+    private static final String LINK_REGEX = "\\[\\[(.*?)\\]\\]";
 
 
-    @SuppressWarnings({"unchecked"})
+
     @Inject
-    public WikipediaRiver(RiverName riverName, RiverSettings settings, Client client) throws MalformedURLException {
+    public WikipediaRiver(final RiverName riverName, final RiverSettings settings,
+                          final Client client) throws MalformedURLException {
         super(riverName, settings);
         this.client = client;
 
@@ -102,18 +104,18 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
 
         if (settings.settings().containsKey("index")) {
             Map<String, Object> indexSettings = (Map<String, Object>) settings.settings().get("index");
-            this.indexName = XContentMapValues.nodeStringValue(indexSettings.get("index"), riverName.name());
-            this.typeName = XContentMapValues.nodeStringValue(indexSettings.get("type"), "page");
-            this.bulkSize = XContentMapValues.nodeIntegerValue(indexSettings.get("bulk_size"), 100);
-            this.bulkFlushInterval = TimeValue.parseTimeValue(XContentMapValues.nodeStringValue(
+            indexName = XContentMapValues.nodeStringValue(indexSettings.get("index"), riverName.name());
+            typeName = XContentMapValues.nodeStringValue(indexSettings.get("type"), "page");
+            bulkSize = XContentMapValues.nodeIntegerValue(indexSettings.get("bulk_size"), 100);
+            bulkFlushInterval = TimeValue.parseTimeValue(XContentMapValues.nodeStringValue(
                     indexSettings.get("flush_interval"), "5s"), TimeValue.timeValueSeconds(5));
-            this.maxConcurrentBulk = XContentMapValues.nodeIntegerValue(indexSettings.get("max_concurrent_bulk"), 1);
+            maxConcurrentBulk = XContentMapValues.nodeIntegerValue(indexSettings.get("max_concurrent_bulk"), 1);
         } else {
-            this.indexName = riverName.name();
-            this.typeName = "page";
-            this.bulkSize = 100;
-            this.maxConcurrentBulk = 1;
-            this.bulkFlushInterval = TimeValue.timeValueSeconds(5);
+            indexName = riverName.name();
+            typeName = "page";
+            bulkSize = 100;
+            maxConcurrentBulk = 1;
+            bulkFlushInterval = TimeValue.timeValueSeconds(5);
         }
     }
 
@@ -133,8 +135,9 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
                 return;
             }
         }
-        WikiXMLParser parser = WikiXMLParserFactory.getSAXParser(url, languagePattern);
+       final WikiXMLParser parser;
         try {
+            parser = WikiXMLParserFactory.getSAXParser(url, languagePattern);
             parser.setPageCallback(new PageCallback());
         } catch (Exception e) {
             logger.error("failed to create parser", e);
@@ -142,22 +145,27 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
         }
 
         // Creating bulk processor
-        this.bulkProcessor = BulkProcessor.builder(client, new BulkProcessor.Listener() {
+        bulkProcessor = BulkProcessor.builder(client, new BulkProcessor.Listener() {
             @Override
-            public void beforeBulk(long executionId, BulkRequest request) {
-                logger.debug("Going to execute new bulk composed of {} actions", request.numberOfActions());
+            public void beforeBulk(long executionId,final BulkRequest request) {
+                logger.debug("Going to execute new bulk composed of {} actions",
+                    request.numberOfActions());
             }
 
             @Override
-            public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+            public void afterBulk(final long executionId, final BulkRequest request,
+                                  final BulkResponse response) {
                 logger.debug("Executed bulk composed of {} actions", request.numberOfActions());
                 if (response.hasFailures()) {
-                    logger.warn("There was failures while executing bulk", response.buildFailureMessage());
+                    logger.warn("There was failures while executing bulk",
+                        response.buildFailureMessage());
                     if (logger.isDebugEnabled()) {
-                        for (BulkItemResponse item : response.getItems()) {
+                        for (final BulkItemResponse item : response.getItems()) {
                             if (item.isFailed()) {
-                                logger.debug("Error for {}/{}/{} for {} operation: {}", item.getIndex(),
-                                        item.getType(), item.getId(), item.getOpType(), item.getFailureMessage());
+                                logger.debug("Error for {}/{}/{} for {} operation: {}",
+                                    item.getIndex(),
+                                        item.getType(), item.getId(), item.getOpType(),
+                                    item.getFailureMessage());
                             }
                         }
                     }
@@ -165,7 +173,7 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
             }
 
             @Override
-            public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+            public void afterBulk(final long executionId, final BulkRequest request, final Throwable failure) {
                 logger.warn("Error executing bulk", failure);
             }
         })
@@ -266,39 +274,45 @@ public class WikipediaRiver extends AbstractRiverComponent implements River {
 
 
     private void initParsingPatternConfig(){
-        languagePattern = new HashMap<String, Pattern>(5);
-        languagePattern.put(REDIRECT_REGEX, redirectPattern);
-        languagePattern.put(DISAMBIGUATION_REGEX, disambCatPattern);
-        languagePattern.put(STUB_REGEX, stubPattern);
-        languagePattern.put(CATEGORY_REGEX, categoryPattern);
-        languagePattern.put(LINK_REGEX, linkPattern);
+
+       final Pattern redirectPattern = Pattern.compile(REDIRECT_REGEX, Pattern.CASE_INSENSITIVE);
+       final Pattern disambCatPattern = Pattern.compile(DISAMBIGUATION_REGEX);
+       final Pattern stubPattern = Pattern.compile(STUB_REGEX);
+       final Pattern categoryPattern = Pattern.compile(CATEGORY_REGEX, Pattern.MULTILINE);
+       final Pattern linkPattern = Pattern.compile(LINK_REGEX, Pattern.MULTILINE);
+       languagePattern = new HashMap<String, Pattern>(5);
+       languagePattern.put(REDIRECT_REGEX_KEY, redirectPattern);
+       languagePattern.put(DISAMBIGUATION_REGEX_KEY, disambCatPattern);
+       languagePattern.put(STUB_REGEX_KEY, stubPattern);
+       languagePattern.put(CATEGORY_REGEX_KEY, categoryPattern);
+       languagePattern.put(LINK_REGEX_KEY, linkPattern);
     }
 
     private void updateParsingPatternConfig(final Map<String, Object> wikipediaSettings){
 
-        if (wikipediaSettings.containsKey(REDIRECT_REGEX)){
-            languagePattern.put(REDIRECT_REGEX,
-                    Pattern.compile((String) wikipediaSettings.get(REDIRECT_REGEX), Pattern.CASE_INSENSITIVE));
+        if (wikipediaSettings.containsKey(REDIRECT_REGEX_KEY)){
+            languagePattern.put(REDIRECT_REGEX_KEY,
+                    Pattern.compile((String) wikipediaSettings.get(REDIRECT_REGEX_KEY), Pattern.CASE_INSENSITIVE));
         }
 
-        if (wikipediaSettings.containsKey(DISAMBIGUATION_REGEX)){
-            languagePattern.put(DISAMBIGUATION_REGEX,
-                    Pattern.compile((String) wikipediaSettings.get(DISAMBIGUATION_REGEX)));
+        if (wikipediaSettings.containsKey(DISAMBIGUATION_REGEX_KEY)){
+            languagePattern.put(DISAMBIGUATION_REGEX_KEY,
+                    Pattern.compile((String) wikipediaSettings.get(DISAMBIGUATION_REGEX_KEY)));
         }
 
-        if (wikipediaSettings.containsKey(STUB_REGEX)){
-            languagePattern.put(STUB_REGEX,
-                    Pattern.compile((String) wikipediaSettings.get(STUB_REGEX)));
+        if (wikipediaSettings.containsKey(STUB_REGEX_KEY)){
+            languagePattern.put(STUB_REGEX_KEY,
+                    Pattern.compile((String) wikipediaSettings.get(STUB_REGEX_KEY)));
         }
 
-        if (wikipediaSettings.containsKey(CATEGORY_REGEX)){
-            languagePattern.put(CATEGORY_REGEX,
-                    Pattern.compile((String) wikipediaSettings.get(CATEGORY_REGEX), Pattern.MULTILINE));
+        if (wikipediaSettings.containsKey(CATEGORY_REGEX_KEY)){
+            languagePattern.put(CATEGORY_REGEX_KEY,
+                    Pattern.compile((String) wikipediaSettings.get(CATEGORY_REGEX_KEY), Pattern.MULTILINE));
         }
 
-        if (wikipediaSettings.containsKey(LINK_REGEX)){
-            languagePattern.put(LINK_REGEX,
-                    Pattern.compile((String) wikipediaSettings.get(LINK_REGEX), Pattern.MULTILINE));
+        if (wikipediaSettings.containsKey(LINK_REGEX_KEY)){
+            languagePattern.put(LINK_REGEX_KEY,
+                    Pattern.compile((String) wikipediaSettings.get(LINK_REGEX_KEY), Pattern.MULTILINE));
         }
     }
 

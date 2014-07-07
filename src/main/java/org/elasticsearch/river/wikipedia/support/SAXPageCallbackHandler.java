@@ -22,6 +22,8 @@ package org.elasticsearch.river.wikipedia.support;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
+
+import java.util.Collections;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -39,11 +41,11 @@ public class SAXPageCallbackHandler extends DefaultHandler {
     private String currentWikitext;
     private String currentTitle;
     private String currentID;
-    private  Map<String, Pattern> languagePattern;
+    private Map<String, Pattern> languagePattern;
 
     public SAXPageCallbackHandler(PageCallbackHandler ph,  Map<String, Pattern> languagePattern) {
         pageHandler = ph;
-        this.languagePattern = languagePattern;
+        this.languagePattern = Collections.unmodifiableMap(languagePattern);
     }
 
     public void startElement(String uri, String name, String qName, Attributes attr) {

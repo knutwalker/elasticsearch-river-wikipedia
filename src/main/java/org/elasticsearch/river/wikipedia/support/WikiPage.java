@@ -28,18 +28,18 @@ import java.util.regex.Pattern;
  *
  * @author Delip Rao
  */
-public class WikiPage {
+public final class WikiPage {
 
-    private String title = null;
-    private WikiTextParser wikiTextParser = null;
-    private String id = null;
+    private String title;
+    private WikiTextParser wikiTextParser;
+    private String id;
 
     /**
      * Set the page title. This is not intended for direct use.
      *
      * @param title
      */
-    public void setTitle(String title) {
+    public void setTitle(final String title) {
         this.title = title;
     }
 
@@ -49,7 +49,7 @@ public class WikiPage {
      *
      * @param wtext wiki-formatted text
      */
-    public void setWikiText(String wtext, Map<String, Pattern> languagePattern) {
+    public void setWikiText(final String wtext,final Map<String, Pattern> languagePattern) {
         wikiTextParser = new WikiTextParser(wtext, languagePattern);
     }
 
@@ -65,7 +65,7 @@ public class WikiPage {
      * @return a string containing the title translated
      *         in the given languageCode.
      */
-    public String getTranslatedTitle(String languageCode) {
+    public String getTranslatedTitle(final String languageCode) {
         return wikiTextParser.getTranslatedTitle(languageCode);
     }
 
@@ -149,4 +149,13 @@ public class WikiPage {
     public String getID() {
         return id;
     }
+
+  @Override
+  public String toString() {
+    return "WikiPage{" +
+        "title='" + title + '\'' +
+        ", wikiTextParser=" + wikiTextParser +
+        ", id='" + id + '\'' +
+        '}';
+  }
 }

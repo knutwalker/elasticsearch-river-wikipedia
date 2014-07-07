@@ -26,6 +26,9 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Collections;
+import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -34,11 +37,13 @@ import java.util.zip.GZIPInputStream;
  */
 public abstract class WikiXMLParser {
 
-    private URL wikiXMLFile = null;
-    protected WikiPage currentPage = null;
+    private final URL wikiXMLFile;
+    private WikiPage currentPage;
+    private final Map<String, Pattern> parsingRegxDefinitions;
 
-    public WikiXMLParser(URL fileName) {
-        wikiXMLFile = fileName;
+    protected WikiXMLParser(final URL fileName, final Map<String, Pattern> parsingDefinitions) {
+      wikiXMLFile = fileName;
+      parsingRegxDefinitions = Collections.unmodifiableMap(parsingDefinitions);
     }
 
     /**
@@ -74,8 +79,8 @@ public abstract class WikiXMLParser {
         if (wikiXMLFile.toExternalForm().endsWith(".gz")) {
             br = new BufferedReader(new InputStreamReader(new GZIPInputStream(wikiXMLFile.openStream()), "UTF-8"));
         } else if (wikiXMLFile.toExternalForm().endsWith(".bz2")) {
-            InputStream fis = wikiXMLFile.openStream();
-            byte[] ignoreBytes = new byte[2];
+            final InputStream fis = wikiXMLFile.openStream();
+            final byte[] ignoreBytes = new byte[2];
             fis.read(ignoreBytes); //"B", "Z" bytes from commandline tools
             br = new BufferedReader(new InputStreamReader(new CBZip2InputStream(fis), "UTF-8"));
         } else {
@@ -85,8 +90,11 @@ public abstract class WikiXMLParser {
         return new InputSource(br);
     }
 
-    protected void notifyPage(WikiPage page) {
-        currentPage = page;
-
+    protected final void notifyPage(WikiPage page) {
+      currentPage = page;
     }
+
+  public final Map<String, Pattern> getParsingRegxDefinitions() {
+    return Collections.unmodifiableMap(parsingRegxDefinitions);
+  }
 }

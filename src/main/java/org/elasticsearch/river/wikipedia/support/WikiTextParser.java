@@ -49,7 +49,7 @@ import java.util.regex.Pattern;
  *
  * @author Delip Rao
  */
-public class WikiTextParser {
+public final class WikiTextParser {
 
     private String wikiText = null;
     private ArrayList<String> pageCats = null;
@@ -60,17 +60,18 @@ public class WikiTextParser {
     private boolean disambiguation = false;
     private InfoBox infoBox = null;
 
-    private static Pattern categoryPattern = null;
-    private static Pattern linkPattern = null;
+    private final Pattern categoryPattern;
+    private final Pattern linkPattern;
 
     public WikiTextParser(String wtext, Map<String, Pattern> regexPatterns) {
         wikiText = wtext;
         // set the parsing pattern
-        Pattern redirectPattern = regexPatterns.get(WikipediaRiver.REDIRECT_REGEX);
-        Pattern disambCatPattern = regexPatterns.get(WikipediaRiver.DISAMBIGUATION_REGEX);
-        Pattern stubPattern = regexPatterns.get(WikipediaRiver.STUB_REGEX);
-        categoryPattern = regexPatterns.get(WikipediaRiver.CATEGORY_REGEX);
-        linkPattern = regexPatterns.get(WikipediaRiver.LINK_REGEX);
+        categoryPattern = regexPatterns.get(WikipediaRiver.CATEGORY_REGEX_KEY);
+        linkPattern = regexPatterns.get(WikipediaRiver.LINK_REGEX_KEY);
+
+        final Pattern redirectPattern = regexPatterns.get(WikipediaRiver.REDIRECT_REGEX_KEY);
+        final Pattern disambCatPattern = regexPatterns.get(WikipediaRiver.DISAMBIGUATION_REGEX_KEY);
+        final Pattern stubPattern = regexPatterns.get(WikipediaRiver.STUB_REGEX_KEY);
 
         Matcher matcher = redirectPattern.matcher(wikiText);
         if (matcher.find()) {

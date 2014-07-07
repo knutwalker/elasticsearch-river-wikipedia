@@ -32,22 +32,16 @@ import java.util.regex.Pattern;
  *
  * @author Jason Smith
  */
-public class WikiXMLSAXParser extends WikiXMLParser {
+public final class WikiXMLSAXParser extends WikiXMLParser {
 
-    private XMLReader xmlReader;
-    private PageCallbackHandler pageHandler = null;
-    private static Map<String, Pattern> parsingRegxDefinitions;
+    private final XMLReader xmlReader;
+    private PageCallbackHandler pageHandler;
 
-    public WikiXMLSAXParser(URL fileName,  Map<String, Pattern> patternDefinitions) {
-        super(fileName);
-        parsingRegxDefinitions = patternDefinitions;
-        try {
+
+    public WikiXMLSAXParser(final URL fileName, final Map<String, Pattern> patternDefinitions) throws SAXException {
+        super(fileName, patternDefinitions);
             xmlReader = XMLReaderFactory.createXMLReader();
             pageHandler = new IteratorHandler(this);
-        } catch (SAXException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -58,7 +52,8 @@ public class WikiXMLSAXParser extends WikiXMLParser {
      * @param handler
      * @throws Exception
      */
-    public void setPageCallback(PageCallbackHandler handler) throws Exception {
+    @Override
+    public void setPageCallback(final PageCallbackHandler handler) throws Exception {
         pageHandler = handler;
     }
 
@@ -68,7 +63,8 @@ public class WikiXMLSAXParser extends WikiXMLParser {
      * @throws Exception
      */
     public void parse() throws Exception {
-        xmlReader.setContentHandler(new SAXPageCallbackHandler(pageHandler, parsingRegxDefinitions));
+        xmlReader.setContentHandler(new SAXPageCallbackHandler(pageHandler,
+            getParsingRegxDefinitions()));
         xmlReader.parse(getInputSource());
     }
 
@@ -81,7 +77,8 @@ public class WikiXMLSAXParser extends WikiXMLParser {
         if (!(pageHandler instanceof IteratorHandler)) {
             throw new Exception("Custom page callback found. Will not iterate.");
         }
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("This parser is event driven, so it can't " +
+            "provide a page iterator");
     }
 
     /**
@@ -91,11 +88,19 @@ public class WikiXMLSAXParser extends WikiXMLParser {
      * @param handler  - callback handler used for parsing
      * @throws Exception
      */
-    public static void parseWikipediaDump(URL dumpFile,
-                                          PageCallbackHandler handler) throws Exception {
-        WikiXMLParser wxsp = WikiXMLParserFactory.getSAXParser(dumpFile, parsingRegxDefinitions);
+    public void parseWikipediaDump(final URL dumpFile,
+                                          final PageCallbackHandler handler) throws Exception {
+       final WikiXMLParser wxsp = WikiXMLParserFactory.getSAXParser(dumpFile,
+           getParsingRegxDefinitions());
         wxsp.setPageCallback(handler);
         wxsp.parse();
     }
 
+  @Override
+  public String toString() {
+    return "WikiXMLSAXParser{" +
+        "xmlReader=" + xmlReader +
+        ", pageHandler=" + pageHandler +
+        '}';
+  }
 }

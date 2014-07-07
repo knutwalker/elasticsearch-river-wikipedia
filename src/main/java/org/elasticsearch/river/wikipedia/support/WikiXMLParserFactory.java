@@ -19,6 +19,8 @@
 
 package org.elasticsearch.river.wikipedia.support;
 
+import org.xml.sax.SAXException;
+
 import java.net.URL;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -26,9 +28,14 @@ import java.util.regex.Pattern;
 /**
  * @author Delip Rao
  */
-public class WikiXMLParserFactory {
+public final class WikiXMLParserFactory {
 
-    public static WikiXMLParser getSAXParser(URL fileName, Map<String, Pattern> languagePattern) {
+  private WikiXMLParserFactory() {
+  }
+
+  public static WikiXMLParser getSAXParser(final URL fileName,
+                                           final Map<String, Pattern> languagePattern)
+      throws SAXException {
         return new WikiXMLSAXParser(fileName, languagePattern);
     }
 

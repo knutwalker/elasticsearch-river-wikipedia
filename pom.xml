@@ -62,7 +62,6 @@
             <version>${elasticsearch.version}</version>
             <scope>compile</scope>
         </dependency>
-
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
@@ -75,6 +74,13 @@
             <artifactId>elasticsearch</artifactId>
             <version>${elasticsearch.version}</version>
             <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>6.1.1</version>
             <scope>test</scope>
         </dependency>
 

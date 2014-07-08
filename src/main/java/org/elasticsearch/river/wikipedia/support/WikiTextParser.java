@@ -36,9 +36,12 @@
 
 package org.elasticsearch.river.wikipedia.support;
 
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.river.wikipedia.WikipediaRiver;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,19 +54,19 @@ import java.util.regex.Pattern;
  */
 public final class WikiTextParser {
 
-    private String wikiText = null;
-    private ArrayList<String> pageCats = null;
-    private ArrayList<String> pageLinks = null;
-    private boolean redirect = false;
-    private String redirectString = null;
-    private boolean stub = false;
-    private boolean disambiguation = false;
-    private InfoBox infoBox = null;
+    private final String wikiText;
+    private List<String> pageCats;
+    private List<String> pageLinks;
+    private boolean redirect;
+    private String redirectString;
+    private boolean stub;
+    private boolean disambiguation;
+    private InfoBox infoBox;
 
     private final Pattern categoryPattern;
     private final Pattern linkPattern;
 
-    public WikiTextParser(String wtext, Map<String, Pattern> regexPatterns) {
+    public WikiTextParser(final String wtext, final Map<String, Pattern> regexPatterns) {
         wikiText = wtext;
         // set the parsing pattern
         categoryPattern = regexPatterns.get(WikipediaRiver.CATEGORY_REGEX_KEY);
@@ -73,16 +76,17 @@ public final class WikiTextParser {
         final Pattern disambCatPattern = regexPatterns.get(WikipediaRiver.DISAMBIGUATION_REGEX_KEY);
         final Pattern stubPattern = regexPatterns.get(WikipediaRiver.STUB_REGEX_KEY);
 
-        Matcher matcher = redirectPattern.matcher(wikiText);
+        final Matcher matcher = redirectPattern.matcher(wikiText);
         if (matcher.find()) {
             redirect = true;
-            if (matcher.groupCount() == 1)
-                redirectString = matcher.group(1);
+            if (matcher.groupCount() == 1){
+              redirectString = matcher.group(1);
+            }
         }
-        matcher = stubPattern.matcher(wikiText);
-        stub = matcher.find();
-        matcher = disambCatPattern.matcher(wikiText);
-        disambiguation = matcher.find();
+        final Matcher stubMatcher = stubPattern.matcher(wikiText);
+        stub = stubMatcher.find();
+        final Matcher disambiMatcher = disambCatPattern.matcher(wikiText);
+        disambiguation = disambiMatcher.find();
     }
 
     public boolean isRedirect() {
@@ -101,32 +105,38 @@ public final class WikiTextParser {
         return wikiText;
     }
 
-    public ArrayList<String> getCategories() {
-        if (pageCats == null) parseCategories();
-        return pageCats;
+    public List<String> getCategories() {
+        if (pageCats == null) {
+          parseCategories();
+        }
+        return Collections.unmodifiableList(pageCats);
     }
 
-    public ArrayList<String> getLinks() {
-        if (pageLinks == null) parseLinks();
-        return pageLinks;
+    public List<String> getLinks() {
+        if (pageLinks == null) {
+          parseLinks();
+        }
+        return Collections.unmodifiableList(pageLinks);
     }
 
     private void parseCategories() {
         pageCats = new ArrayList<String>();
-        Matcher matcher = categoryPattern.matcher(wikiText);
+        final Matcher matcher = categoryPattern.matcher(wikiText);
         while (matcher.find()) {
-            String[] temp = matcher.group(1).split("\\|");
+            final String[] temp = matcher.group(1).split("\\|");
             pageCats.add(temp[0]);
         }
     }
 
     private void parseLinks() {
         pageLinks = new ArrayList<String>();
-        Matcher matcher = linkPattern.matcher(wikiText);
+        final Matcher matcher = linkPattern.matcher(wikiText);
         while (matcher.find()) {
-            String[] temp = matcher.group(1).split("\\|");
-            if (temp == null || temp.length == 0) continue;
-            String link = temp[0];
+            final String[] temp = matcher.group(1).split("\\|");
+            if (temp == null || temp.length == 0) {
+              continue;
+            }
+            final String link = temp[0];
             if (!link.contains(":")) {
                 pageLinks.add(link);
             }
@@ -143,21 +153,29 @@ public final class WikiTextParser {
         text = text.replaceAll("\\[\\[(.*?)\\]\\]", "$1");
         text = text.replaceAll("\\s(.*?)\\|(\\w+\\s)", " $2");
         text = text.replaceAll("\\[.*?\\]", " ");
-        text = text.replaceAll("\\'+", "");
-        return text;
+        text = text.replaceAll("\'+", "");
+        text = text.replaceAll("===(.*?)===", "$1");
+        text = text.replaceAll("==(.*?)==", "$1");
+        text = text.replaceAll("\\*", "");
+
+      return text;
     }
 
     public InfoBox getInfoBox() {
         //parseInfoBox is expensive. Doing it only once like other parse* methods
-        if (infoBox == null)
-            infoBox = parseInfoBox();
+        if (infoBox == null) {
+          infoBox = parseInfoBox();
+        }
         return infoBox;
     }
 
+    @Nullable
     private InfoBox parseInfoBox() {
-        String INFOBOX_CONST_STR = "{{Infobox";
-        int startPos = wikiText.indexOf(INFOBOX_CONST_STR);
-        if (startPos < 0) return null;
+        final String INFOBOX_CONST_STR = "{{Infobox";
+        final int startPos = wikiText.indexOf(INFOBOX_CONST_STR);
+        if (startPos < 0) {
+          return null;
+        }
         int bracketCount = 2;
         int endPos = startPos + INFOBOX_CONST_STR.length();
         for (; endPos < wikiText.length(); endPos++) {
@@ -170,7 +188,9 @@ public final class WikiTextParser {
                     break;
                 default:
             }
-            if (bracketCount == 0) break;
+            if (bracketCount == 0) {
+              break;
+            }
         }
         String infoBoxText = wikiText.substring(startPos, endPos + 1);
         infoBoxText = stripCite(infoBoxText); // strip clumsy {{cite}} tags
@@ -182,35 +202,40 @@ public final class WikiTextParser {
         return new InfoBox(infoBoxText);
     }
 
-    private String stripCite(String text) {
-        String CITE_CONST_STR = "{{cite";
-        int startPos = text.indexOf(CITE_CONST_STR);
-        if (startPos < 0) return text;
-        int bracketCount = 2;
-        int endPos = startPos + CITE_CONST_STR.length();
-        for (; endPos < text.length(); endPos++) {
-            switch (text.charAt(endPos)) {
-                case '}':
-                    bracketCount--;
-                    break;
-                case '{':
-                    bracketCount++;
-                    break;
-                default:
-            }
-            if (bracketCount == 0) break;
-        }
-        text = text.substring(0, startPos - 1) + text.substring(endPos);
-        return stripCite(text);
+  private String stripCite(final String text) {
+    String text1 = text;
+    final String CITE_CONST_STR = "{{cite";
+    final int startPos = text1.indexOf(CITE_CONST_STR);
+    if (startPos < 0) {
+      return text1;
     }
+    int bracketCount = 2;
+    int endPos = startPos + CITE_CONST_STR.length();
+    for (; endPos < text1.length(); endPos++) {
+      switch (text1.charAt(endPos)) {
+        case '}':
+          bracketCount--;
+          break;
+        case '{':
+          bracketCount++;
+          break;
+        default:
+      }
+      if (bracketCount == 0) {
+        break;
+      }
+    }
+    text1 = text1.substring(0, startPos - 1) + text1.substring(endPos);
+    return stripCite(text1);
+  }
 
     public boolean isDisambiguationPage() {
         return disambiguation;
     }
 
-    public String getTranslatedTitle(String languageCode) {
-        Pattern pattern = Pattern.compile("^\\[\\[" + languageCode + ":(.*?)\\]\\]$", Pattern.MULTILINE);
-        Matcher matcher = pattern.matcher(wikiText);
+    public String getTranslatedTitle(final String languageCode) {
+        final Pattern pattern = Pattern.compile("^\\[\\[" + languageCode + ":(.*?)\\]\\]$", Pattern.MULTILINE);
+        final Matcher matcher = pattern.matcher(wikiText);
         if (matcher.find()) {
             return matcher.group(1);
         }

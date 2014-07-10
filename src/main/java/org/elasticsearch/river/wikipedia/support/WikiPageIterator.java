@@ -33,7 +33,7 @@ public class WikiPageIterator {
     private int lastPage = 0;
     Vector<WikiPage> pageList = null;
 
-    public WikiPageIterator(Vector<WikiPage> list) {
+    public WikiPageIterator(final Vector<WikiPage> list) {
         pageList = list;
         if (pageList != null)
             lastPage = pageList.size();

@@ -34,21 +34,21 @@ import java.util.regex.Pattern;
  */
 public class SAXPageCallbackHandler extends DefaultHandler {
 
-    private PageCallbackHandler pageHandler;
+    private final PageCallbackHandler pageHandler;
     private WikiPage currentPage;
     private String currentTag;
 
     private String currentWikitext;
     private String currentTitle;
     private String currentID;
-    private Map<String, Pattern> languagePattern;
+    private final Map<String, Pattern> languagePattern;
 
-    public SAXPageCallbackHandler(PageCallbackHandler ph,  Map<String, Pattern> languagePattern) {
+    public SAXPageCallbackHandler(final PageCallbackHandler ph, final Map<String, Pattern> languagePattern) {
         pageHandler = ph;
         this.languagePattern = Collections.unmodifiableMap(languagePattern);
     }
 
-    public void startElement(String uri, String name, String qName, Attributes attr) {
+    public void startElement(final String uri, final String name, final String qName, final Attributes attr) {
         currentTag = qName;
         if (qName.equals("page")) {
             currentPage = new WikiPage();
@@ -58,7 +58,7 @@ public class SAXPageCallbackHandler extends DefaultHandler {
         }
     }
 
-    public void endElement(String uri, String name, String qName) {
+    public void endElement(final String uri, final String name, final String qName) {
         if (qName.equals("page")) {
             currentPage.setTitle(currentTitle);
             currentPage.setID(currentTitle);
@@ -70,7 +70,7 @@ public class SAXPageCallbackHandler extends DefaultHandler {
         }
     }
 
-    public void characters(char ch[], int start, int length) {
+    public void characters(final char[] ch, final int start, final int length) {
         if (currentTag.equals("title")) {
             currentTitle = currentTitle.concat(new String(ch, start, length));
         }

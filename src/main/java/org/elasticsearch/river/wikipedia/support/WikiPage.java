@@ -138,7 +138,7 @@ public final class WikiPage {
         return wikiTextParser.getLinks();
     }
 
-    public void setID(String id) {
+    public void setID(final String id) {
         this.id = id;
     }
 

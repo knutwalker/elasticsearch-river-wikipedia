@@ -25,9 +25,9 @@ package org.elasticsearch.river.wikipedia.support;
  * @author Delip Rao
  */
 public class InfoBox {
-    String infoBoxWikiText = null;
+    final String infoBoxWikiText;
 
-    InfoBox(String infoBoxWikiText) {
+    InfoBox(final String infoBoxWikiText) {
         this.infoBoxWikiText = infoBoxWikiText;
     }
 

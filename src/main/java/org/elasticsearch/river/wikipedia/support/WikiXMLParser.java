@@ -74,7 +74,7 @@ public abstract class WikiXMLParser {
      * @throws Exception
      */
     protected InputSource getInputSource() throws Exception {
-        BufferedReader br = null;
+        final BufferedReader br;
 
         if (wikiXMLFile.toExternalForm().endsWith(".gz")) {
             br = new BufferedReader(new InputStreamReader(new GZIPInputStream(wikiXMLFile.openStream()), "UTF-8"));
@@ -90,7 +90,7 @@ public abstract class WikiXMLParser {
         return new InputSource(br);
     }
 
-    protected final void notifyPage(WikiPage page) {
+    protected final void notifyPage(final WikiPage page) {
       currentPage = page;
     }
 

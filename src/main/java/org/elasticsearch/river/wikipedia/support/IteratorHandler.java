@@ -21,13 +21,13 @@ package org.elasticsearch.river.wikipedia.support;
 
 public class IteratorHandler implements PageCallbackHandler {
 
-    private WikiXMLParser parser = null;
+    private final WikiXMLParser parser;
 
-    public IteratorHandler(WikiXMLParser myParser) {
+    public IteratorHandler(final WikiXMLParser myParser) {
         parser = myParser;
     }
 
-    public void process(WikiPage page) {
+    public void process(final WikiPage page) {
         parser.notifyPage(page);
     }
 

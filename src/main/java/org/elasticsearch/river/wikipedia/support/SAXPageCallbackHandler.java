@@ -19,11 +19,11 @@
 
 package org.elasticsearch.river.wikipedia.support;
 
+import org.elasticsearch.common.collect.ImmutableMap;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -45,7 +45,7 @@ public class SAXPageCallbackHandler extends DefaultHandler {
 
     public SAXPageCallbackHandler(final PageCallbackHandler ph, final Map<String, Pattern> languagePattern) {
         pageHandler = ph;
-        this.languagePattern = Collections.unmodifiableMap(languagePattern);
+        this.languagePattern = ImmutableMap.copyOf(languagePattern);
     }
 
     public void startElement(final String uri, final String name, final String qName, final Attributes attr) {

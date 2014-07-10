@@ -37,10 +37,9 @@
 package org.elasticsearch.river.wikipedia.support;
 
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.collect.ImmutableList;
 import org.elasticsearch.river.wikipedia.WikipediaRiver;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -109,38 +108,40 @@ public final class WikiTextParser {
         if (pageCats == null) {
           parseCategories();
         }
-        return Collections.unmodifiableList(pageCats);
+        return pageCats;
     }
 
     public List<String> getLinks() {
         if (pageLinks == null) {
           parseLinks();
         }
-        return Collections.unmodifiableList(pageLinks);
+        return pageLinks;
     }
 
     private void parseCategories() {
-        pageCats = new ArrayList<String>();
+        final ImmutableList.Builder<String> builder = ImmutableList.builder();
         final Matcher matcher = categoryPattern.matcher(wikiText);
         while (matcher.find()) {
             final String[] temp = matcher.group(1).split("\\|");
-            pageCats.add(temp[0]);
+            builder.add(temp[0]);
         }
+        pageCats = builder.build();
     }
 
     private void parseLinks() {
-        pageLinks = new ArrayList<String>();
+        final ImmutableList.Builder<String> builder = ImmutableList.builder();
         final Matcher matcher = linkPattern.matcher(wikiText);
         while (matcher.find()) {
             final String[] temp = matcher.group(1).split("\\|");
-            if (temp == null || temp.length == 0) {
+            if (temp.length == 0) {
               continue;
             }
             final String link = temp[0];
             if (!link.contains(":")) {
-                pageLinks.add(link);
+                builder.add(link);
             }
         }
+        pageLinks = builder.build();
     }
 
     public String getPlainText() {

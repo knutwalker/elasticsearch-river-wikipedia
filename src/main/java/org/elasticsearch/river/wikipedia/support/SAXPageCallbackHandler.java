@@ -61,7 +61,7 @@ public class SAXPageCallbackHandler extends DefaultHandler {
     public void endElement(String uri, String name, String qName) {
         if (qName.equals("page")) {
             currentPage.setTitle(currentTitle);
-            currentPage.setID(currentID);
+            currentPage.setID(currentTitle);
             currentPage.setWikiText(currentWikitext, this.languagePattern);
             pageHandler.process(currentPage);
         }

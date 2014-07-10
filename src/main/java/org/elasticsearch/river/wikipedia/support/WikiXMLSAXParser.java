@@ -64,7 +64,7 @@ public final class WikiXMLSAXParser extends WikiXMLParser {
      */
     public void parse() throws Exception {
         xmlReader.setContentHandler(new SAXPageCallbackHandler(pageHandler,
-            getParsingRegxDefinitions()));
+            getParsingRegexDefinitions()));
         xmlReader.parse(getInputSource());
     }
 
@@ -91,7 +91,7 @@ public final class WikiXMLSAXParser extends WikiXMLParser {
     public void parseWikipediaDump(final URL dumpFile,
                                           final PageCallbackHandler handler) throws Exception {
        final WikiXMLParser wxsp = WikiXMLParserFactory.getSAXParser(dumpFile,
-           getParsingRegxDefinitions());
+           getParsingRegexDefinitions());
         wxsp.setPageCallback(handler);
         wxsp.parse();
     }

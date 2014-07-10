@@ -94,7 +94,7 @@ public abstract class WikiXMLParser {
       currentPage = page;
     }
 
-  public final Map<String, Pattern> getParsingRegxDefinitions() {
+  public final Map<String, Pattern> getParsingRegexDefinitions() {
     return Collections.unmodifiableMap(parsingRegxDefinitions);
   }
 }

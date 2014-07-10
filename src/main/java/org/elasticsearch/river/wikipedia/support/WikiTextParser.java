@@ -153,12 +153,11 @@ public final class WikiTextParser {
         text = text.replaceAll("\\[\\[(.*?)\\]\\]", "$1");
         text = text.replaceAll("\\s(.*?)\\|(\\w+\\s)", " $2");
         text = text.replaceAll("\\[.*?\\]", " ");
-        text = text.replaceAll("\'+", "");
+        text = text.replaceAll("'+", "");
         text = text.replaceAll("===(.*?)===", "$1");
         text = text.replaceAll("==(.*?)==", "$1");
         text = text.replaceAll("\\*", "");
-
-      return text;
+        return text;
     }
 
     public InfoBox getInfoBox() {
@@ -202,32 +201,31 @@ public final class WikiTextParser {
         return new InfoBox(infoBoxText);
     }
 
-  private String stripCite(final String text) {
-    String text1 = text;
-    final String CITE_CONST_STR = "{{cite";
-    final int startPos = text1.indexOf(CITE_CONST_STR);
-    if (startPos < 0) {
-      return text1;
+    private String stripCite(final String text) {
+        final String CITE_CONST_STR = "{{cite";
+        final int startPos = text.indexOf(CITE_CONST_STR);
+        if (startPos < 0) {
+            return text;
+        }
+        int bracketCount = 2;
+        int endPos = startPos + CITE_CONST_STR.length();
+        for (; endPos < text.length(); endPos++) {
+            switch (text.charAt(endPos)) {
+                case '}':
+                    bracketCount--;
+                    break;
+                case '{':
+                    bracketCount++;
+                    break;
+                default:
+            }
+            if (bracketCount == 0) {
+                break;
+            }
+        }
+        final String newText = text.substring(0, startPos - 1) + text.substring(endPos);
+        return stripCite(newText);
     }
-    int bracketCount = 2;
-    int endPos = startPos + CITE_CONST_STR.length();
-    for (; endPos < text1.length(); endPos++) {
-      switch (text1.charAt(endPos)) {
-        case '}':
-          bracketCount--;
-          break;
-        case '{':
-          bracketCount++;
-          break;
-        default:
-      }
-      if (bracketCount == 0) {
-        break;
-      }
-    }
-    text1 = text1.substring(0, startPos - 1) + text1.substring(endPos);
-    return stripCite(text1);
-  }
 
     public boolean isDisambiguationPage() {
         return disambiguation;
@@ -241,5 +239,4 @@ public final class WikiTextParser {
         }
         return null;
     }
-
 }

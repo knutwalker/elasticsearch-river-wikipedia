@@ -107,7 +107,7 @@ public final class WikiTextParserTest {
     languagePattern.put(WikipediaRiver.CATEGORY_REGEX_KEY, categoryPattern);
     languagePattern.put(WikipediaRiver.LINK_REGEX_KEY, linkPattern);
 
-    final WikiTextParser wikiTextParser = new WikiTextParser(input, languagePattern);
+    final WikiTextParser wikiTextParser = WikiTextParser.of(input, languagePattern);
     final String plainText = wikiTextParser.getPlainText();
     assertThat(plainText.indexOf("== "), is(equalTo(-1)));
     assertThat(plainText.indexOf("* "), is(equalTo(-1)));

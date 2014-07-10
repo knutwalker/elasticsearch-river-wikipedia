@@ -49,8 +49,8 @@ public final class WikiPage {
      *
      * @param wtext wiki-formatted text
      */
-    public void setWikiText(final String wtext,final Map<String, Pattern> languagePattern) {
-        wikiTextParser = new WikiTextParser(wtext, languagePattern);
+    public void setWikiText(final String wtext, final Map<String, Pattern> languagePattern) {
+        wikiTextParser = WikiTextParser.of(wtext, languagePattern);
     }
 
     /**

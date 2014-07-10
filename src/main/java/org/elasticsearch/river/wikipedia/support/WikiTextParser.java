@@ -56,36 +56,28 @@ public final class WikiTextParser {
     private final String wikiText;
     private List<String> pageCats;
     private List<String> pageLinks;
-    private boolean redirect;
-    private String redirectString;
-    private boolean stub;
-    private boolean disambiguation;
     private InfoBox infoBox;
+    private final boolean redirect;
+    private final String redirectString;
+    private final boolean stub;
+    private final boolean disambiguation;
 
     private final Pattern categoryPattern;
     private final Pattern linkPattern;
 
-    public WikiTextParser(final String wtext, final Map<String, Pattern> regexPatterns) {
-        wikiText = wtext;
-        // set the parsing pattern
-        categoryPattern = regexPatterns.get(WikipediaRiver.CATEGORY_REGEX_KEY);
-        linkPattern = regexPatterns.get(WikipediaRiver.LINK_REGEX_KEY);
+    private WikiTextParser(
+            final String wikiText,
+            final boolean isRedirect, final String redirect,
+            final boolean isStub, final boolean isDisambiguation,
+            final Pattern categoryPattern, final Pattern linkPattern) {
 
-        final Pattern redirectPattern = regexPatterns.get(WikipediaRiver.REDIRECT_REGEX_KEY);
-        final Pattern disambCatPattern = regexPatterns.get(WikipediaRiver.DISAMBIGUATION_REGEX_KEY);
-        final Pattern stubPattern = regexPatterns.get(WikipediaRiver.STUB_REGEX_KEY);
-
-        final Matcher matcher = redirectPattern.matcher(wikiText);
-        if (matcher.find()) {
-            redirect = true;
-            if (matcher.groupCount() == 1){
-              redirectString = matcher.group(1);
-            }
-        }
-        final Matcher stubMatcher = stubPattern.matcher(wikiText);
-        stub = stubMatcher.find();
-        final Matcher disambiMatcher = disambCatPattern.matcher(wikiText);
-        disambiguation = disambiMatcher.find();
+        this.wikiText = wikiText;
+        this.categoryPattern = categoryPattern;
+        this.linkPattern = linkPattern;
+        this.redirectString = redirect;
+        this.stub = isStub;
+        this.disambiguation = isDisambiguation;
+        this.redirect = isRedirect;
     }
 
     public boolean isRedirect() {
@@ -202,7 +194,20 @@ public final class WikiTextParser {
         return new InfoBox(infoBoxText);
     }
 
-    private String stripCite(final String text) {
+    public boolean isDisambiguationPage() {
+        return disambiguation;
+    }
+
+    public String getTranslatedTitle(final String languageCode) {
+        final Pattern pattern = Pattern.compile("^\\[\\[" + languageCode + ":(.*?)\\]\\]$", Pattern.MULTILINE);
+        final Matcher matcher = pattern.matcher(wikiText);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
+    private static String stripCite(final String text) {
         final String CITE_CONST_STR = "{{cite";
         final int startPos = text.indexOf(CITE_CONST_STR);
         if (startPos < 0) {
@@ -228,16 +233,29 @@ public final class WikiTextParser {
         return stripCite(newText);
     }
 
-    public boolean isDisambiguationPage() {
-        return disambiguation;
-    }
+    public static WikiTextParser of(final String wikiText, final Map<String, Pattern> regexPatterns) {
+        final boolean stub;
+        final boolean disambiguation;
+        boolean redirect = false;
+        String redirectString = null;
 
-    public String getTranslatedTitle(final String languageCode) {
-        final Pattern pattern = Pattern.compile("^\\[\\[" + languageCode + ":(.*?)\\]\\]$", Pattern.MULTILINE);
-        final Matcher matcher = pattern.matcher(wikiText);
+        final Pattern categoryPattern = regexPatterns.get(WikipediaRiver.CATEGORY_REGEX_KEY);
+        final Pattern linkPattern = regexPatterns.get(WikipediaRiver.LINK_REGEX_KEY);
+        final Pattern redirectPattern = regexPatterns.get(WikipediaRiver.REDIRECT_REGEX_KEY);
+        final Pattern disambiguationCatPattern = regexPatterns.get(WikipediaRiver.DISAMBIGUATION_REGEX_KEY);
+        final Pattern stubPattern = regexPatterns.get(WikipediaRiver.STUB_REGEX_KEY);
+
+        final Matcher matcher = redirectPattern.matcher(wikiText);
         if (matcher.find()) {
-            return matcher.group(1);
+            redirect = true;
+            if (matcher.groupCount() == 1)
+                redirectString = matcher.group(1);
         }
-        return null;
+        final Matcher stubMatcher = stubPattern.matcher(wikiText);
+        stub = stubMatcher.find();
+        final Matcher disambiguationMatcher = disambiguationCatPattern.matcher(wikiText);
+        disambiguation = disambiguationMatcher.find();
+
+        return new WikiTextParser(wikiText, redirect, redirectString, stub, disambiguation, categoryPattern, linkPattern);
     }
 }

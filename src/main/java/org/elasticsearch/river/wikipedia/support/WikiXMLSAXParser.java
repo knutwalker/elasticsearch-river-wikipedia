@@ -24,6 +24,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import java.net.URL;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -73,10 +74,7 @@ public final class WikiXMLSAXParser extends WikiXMLParser {
      * can't provide a page iterator.
      */
     @Override
-    public WikiPageIterator getIterator() throws Exception {
-        if (!(pageHandler instanceof IteratorHandler)) {
-            throw new Exception("Custom page callback found. Will not iterate.");
-        }
+    public Iterator<WikiPage> iterator() {
         throw new UnsupportedOperationException("This parser is event driven, so it can't " +
             "provide a page iterator");
     }

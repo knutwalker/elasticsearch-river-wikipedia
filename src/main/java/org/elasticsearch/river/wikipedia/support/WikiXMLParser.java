@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
@@ -35,7 +36,7 @@ import java.util.zip.GZIPInputStream;
  * @author Delip Rao
  * @author Jason Smith
  */
-public abstract class WikiXMLParser {
+public abstract class WikiXMLParser implements Iterable<WikiPage> {
 
     private final URL wikiXMLFile;
     private WikiPage currentPage;
@@ -62,12 +63,6 @@ public abstract class WikiXMLParser {
      * @throws Exception
      */
     public abstract void parse() throws Exception;
-
-    /**
-     * @return an iterator to the list of pages
-     * @throws Exception
-     */
-    public abstract WikiPageIterator getIterator() throws Exception;
 
     /**
      * @return An InputSource created from wikiXMLFile

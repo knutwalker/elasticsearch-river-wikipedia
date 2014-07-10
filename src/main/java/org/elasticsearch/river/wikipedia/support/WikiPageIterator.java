@@ -19,6 +19,8 @@
 
 package org.elasticsearch.river.wikipedia.support;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Vector;
 
 /**
@@ -27,7 +29,7 @@ import java.util.Vector;
  * @author Delip Rao
  * @see WikiXMLDOMParser
  */
-public class WikiPageIterator {
+public final class WikiPageIterator implements Iterator<WikiPage> {
 
     private int currentPage = 0;
     private int lastPage = 0;
@@ -46,6 +48,11 @@ public class WikiPageIterator {
         return (currentPage < lastPage);
     }
 
+    @Override
+    public boolean hasNext() {
+       return hasMorePages();
+    }
+
     /**
      * Reset the iterator.
      */
@@ -62,5 +69,19 @@ public class WikiPageIterator {
         if (hasMorePages())
             return pageList.elementAt(currentPage++);
         return null;
+    }
+
+    @Override
+    public WikiPage next() {
+      final WikiPage wikiPage = nextPage();
+      if (wikiPage == null) {
+        throw new NoSuchElementException();
+      }
+      return wikiPage;
+    }
+
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException();
     }
 }
